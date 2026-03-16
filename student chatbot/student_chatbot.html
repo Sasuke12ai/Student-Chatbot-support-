@@ -1,0 +1,232 @@
+<?php
+session_start();
+// Initialize variables to prevent "Undefined Variable" errors
+$is_logged_in = isset($_SESSION['student_id']);
+$student_id = $is_logged_in ? htmlspecialchars($_SESSION['student_id']) : 'Guest';
+$is_admin = $is_logged_in && isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin';
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeSpace Counseling - Bullying Support & Mental Health</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "hsl(210 40% 98%)",
+                        'primary-foreground': "hsl(222.2 47.4% 11.2%)",
+                        secondary: "hsl(270 90% 60%)",
+                        'secondary-foreground': "hsl(0 0% 100%)",
+                        muted: "hsl(210 40% 96.1%)",
+                        'muted-foreground': "hsl(215.4 16.3% 46.9%)",
+                        background: "hsl(0 0% 100%)",
+                        card: "hsl(0 0% 100%)",
+                        'card-foreground': "hsl(222.2 47.4% 11.2%)",
+                        border: "hsl(214.3 31.8% 91.4%)",
+                        input: "hsl(214.3 31.8% 91.4%)",
+                        ring: "hsl(215 20.4% 27.1%)",
+                        danger: "hsl(0 84.2% 60.2%)",
+                    },
+                },
+            },
+        }
+    </script>
+
+    <style>
+        html { scroll-behavior: smooth; }
+        
+        /* Fixed: Use the color names defined in tailwind.config, not CSS variables */
+        .text-secondary { color: hsl(270 90% 60%); }
+        .bg-secondary { background-color: hsl(270 90% 60%); }
+        
+        .input-style {
+            display: flex;
+            height: 2.5rem;
+            width: 100%;
+            border-radius: 0.5rem;
+            border: 1px solid hsl(214.3 31.8% 91.4%);
+            background-color: white;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+        }
+        .input-style:focus {
+            outline: 2px solid transparent;
+            outline-offset: 2px;
+            --tw-ring-offset-width: 2px;
+            --tw-ring-color: hsl(270 90% 60%);
+            box-shadow: 0 0 0 4px var(--tw-ring-color);
+        }
+        textarea.input-style { min-height: 80px; }
+    </style>
+</head>
+<body class="bg-background text-card-foreground antialiased">
+    <div class="min-h-screen flex flex-col">
+        
+        <header class="sticky top-0 z-50 bg-white shadow-md">
+            <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+                <a href="index.php" class="text-2xl font-extrabold text-secondary hover:text-secondary/90 transition-colors">SafeSpace</a>
+                
+                <nav class="hidden md:flex space-x-6 text-sm font-medium items-center">
+                    <a href="#hero" class="hover:text-secondary transition-colors">Home</a>
+                    <a href="#services" class="hover:text-secondary transition-colors">Services</a>
+                    <a href="#forms" class="hover:text-secondary transition-colors">Support</a>
+                    <a href="#contact" class="hover:text-secondary transition-colors">Contact</a>
+                    
+                    <?php if ($is_logged_in): ?>
+                        <?php
+                            $dashboard_url = $is_admin ? 'dashboard.php' : 'student_dashboard.php';
+                            $dashboard_text = $is_admin ? 'Admin Dashboard' : 'My Status';
+                        ?>                        
+                        <a href="<?php echo $dashboard_url; ?>" class="text-orange-600 hover:text-orange-800 transition-colors flex items-center">
+                            <i data-lucide="layout-dashboard" class="w-4 h-4 mr-1"></i>
+                            <?php echo $dashboard_text; ?>
+                        </a>
+                        <span class="text-secondary font-bold">Hi, <?php echo $student_id; ?></span>
+                        <a href="logout.php" class="text-red-600 hover:text-red-800 transition-colors">Logout</a>
+                    <?php else: ?>
+                        <a href="signin.php" class="text-blue-600 hover:text-blue-800 transition-colors">Login</a>
+                    <?php endif; ?>
+                </nav>
+            </div>
+        </header>
+
+        <main class="flex-grow">
+            <section id="hero" class="py-20 lg:py-32 bg-gray-50 border-b">
+                <div class="container mx-auto px-4 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                    <div>
+                        <h1 class="text-5xl lg:text-6xl font-extrabold mb-4 leading-tight text-gray-900">
+                            Find Your SafeSpace. <span class="text-secondary">Start Your Healing.</span>
+                        </h1>
+                        <p class="text-xl text-gray-600 mb-8">
+                            Confidential and immediate support for bullying, harassment, and mental health challenges.
+                        </p>
+                    </div>
+                    <div class="hidden lg:flex justify-center">
+                        <img src="ChatGPT.png" alt="Support" class="rounded-xl shadow-2xl max-h-[32rem] object-cover">
+                    </div>
+                </div>
+            </section>
+
+            <section id="forms" class="py-16 lg:py-24 bg-gray-50 border-t border-b">
+                <div class="container mx-auto px-4">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                        <div id="submit-concern" class="rounded-xl border bg-white shadow-xl p-6 md:p-8">
+                            <h2 class="text-2xl font-bold mb-6 text-center">Submit a Detailed Concern</h2>
+                            <form onsubmit="submitFullConcern(event)">
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="text-sm font-medium mb-2 block">Concern Type</label>
+                                        <select name="concernType" required class="input-style">
+                                            <option value="">Select a Category</option>
+                                            <option value="school-bullying">Bullying Concern</option>
+                                            <option value="emotional-distress">Mental Health Concern</option>
+                                            <option value="other">Others</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="text-sm font-medium mb-2 block">Describe the Situation</label>
+                                        <textarea name="detail" required placeholder="Who, what, and when..." class="input-style"></textarea>
+                                    </div>
+                                    <div>
+                                        <label class="text-sm font-medium mb-2 block">Preferred Contact</label>
+                                        <input type="text" name="preferredContact" required placeholder="Email or Phone" class="input-style">
+                                    </div>
+                                    <input type="hidden" name="author_id" value="<?php echo $student_id; ?>">
+                                </div>
+                                <button type="submit" class="mt-6 bg-secondary text-white rounded-lg h-10 w-full font-medium hover:opacity-90">
+                                    Submit Confidential Report
+                                </button>
+                            </form>
+                        </div>
+
+                        <div id="book-appointment" class="rounded-xl border bg-white shadow-xl p-6 md:p-8">
+                            <h2 class="text-2xl font-bold mb-6 text-center">Book an Appointment</h2>
+                            <form onsubmit="bookAppointment(event)">
+                                <div class="space-y-4">
+                                    <input type="text" name="name" required placeholder="Full Name" class="input-style">
+                                    <input type="email" name="email" required placeholder="Email Address" class="input-style">
+                                    <input type="tel" name="phone" required placeholder="Phone Number" class="input-style">
+                                    <input type="datetime-local" name="datetime" required class="input-style">
+                                    <select name="sessionType" required class="input-style">
+                                        <option value="">Select session type</option>
+                                        <option value="in-person">In-Person</option>
+                                        <option value="video-call">Video Call</option>
+                                    </select>
+                                    <input type="hidden" name="author_id" value="<?php echo $student_id; ?>">
+                                </div>
+                                <button type="submit" class="mt-6 bg-secondary text-white rounded-lg h-10 w-full font-medium hover:opacity-90">
+                                    Confirm Appointment
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="bg-gray-800 text-white py-12">
+            <div class="container mx-auto px-4 text-center">
+                <p>&copy; 2025 SafeSpace Counseling. School Facility.</p>
+            </div>
+        </footer>
+
+        <div id="toaster-container" class="fixed top-4 right-4 z-50 space-y-2 max-w-md"></div>
+    </div>
+
+    <script>
+        // Lucide Icon Init
+        lucide.createIcons();
+
+        // Toast System
+        window.showToast = (title, message, type = 'success') => {
+            const container = document.getElementById('toaster-container');
+            const color = type === 'success' ? 'bg-green-500' : 'bg-red-600';
+            const toast = document.createElement('div');
+            toast.className = `p-4 rounded-lg shadow-xl text-white ${color} transition-all duration-300`;
+            toast.innerHTML = `<strong>${title}</strong><p class="text-sm">${message}</p>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 5000);
+        };
+
+        // Generic Submit Handler
+        async function handleFormSubmit(event, url, successTitle) {
+            event.preventDefault();
+            const form = event.target;
+            const btn = form.querySelector('button');
+            const originalText = btn.innerText;
+
+            btn.disabled = true;
+            btn.innerText = 'Processing...';
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams(new FormData(form)).toString()
+                });
+                const result = await response.json();
+                if (result.success) {
+                    window.showToast(successTitle, result.message);
+                    form.reset();
+                } else {
+                    window.showToast('Error', result.message, 'error');
+                }
+            } catch (e) {
+                window.showToast('Error', 'Connection failed', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerText = originalText;
+            }
+        }
+
+        window.submitFullConcern = (e) => handleFormSubmit(e, 'submit_detailed_concern.php', 'Report Sent');
+        window.bookAppointment = (e) => handleFormSubmit(e, 'book_appointment.php', 'Booking Confirmed');
+    </script>
+</body>
+</html>
